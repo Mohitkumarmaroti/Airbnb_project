@@ -68,22 +68,22 @@ for(i in 1:2 ){
   Reviews$SentimentHE[i] <- Reviews_sentiment$SentimentHE[i]
   }
 Sys.time() - b
-Reviews_sentiment <- analyzeSentiment(Reviews_subset$comments)
+#Reviews_sentiment <- analyzeSentiment(Reviews_subset$comments)
 #Sys.time() - b
-Reviews_sentiment$RowID <- seq.int(nrow(Reviews_sentiment))
-Reviews_sentiment_join <- inner_join(Reviews_subset, Reviews_sentiment, by = "RowID") 
-Reviews_mean_GI <- Reviews_sentiment_join %>%
-  group_by(listing_id) %>%
-  summarize(mean(SentimentGI))
-Reviews_mean_HE <- Reviews_sentiment_join %>%
-  group_by(listing_id) %>%
-  summarize(mean(SentimentHE))
-Reviews_mean_LM <- Reviews_sentiment_join %>%
-  group_by(listing_id) %>%
-  summarize(mean(SentimentLM))
-Reviews_mean_QDAP <- Reviews_sentiment_join %>%
-  group_by(listing_id) %>%
-  summarize(mean(SentimentQDAP))
+#Reviews_sentiment$RowID <- seq.int(nrow(Reviews_sentiment))
+#Reviews_sentiment_join <- inner_join(Reviews_subset, Reviews_sentiment, by = "RowID") 
+#Reviews_mean_GI <- Reviews_sentiment_join %>%
+  #group_by(listing_id) %>%
+  #ummarize(mean(SentimentGI))
+#Reviews_mean_HE <- Reviews_sentiment_join %>%
+ # group_by(listing_id) %>%
+  #summarize(mean(SentimentHE))
+#Reviews_mean_LM <- Reviews_sentiment_join %>%
+ # group_by(listing_id) %>%
+  #summarize(mean(SentimentLM))
+#Reviews_mean_QDAP <- Reviews_sentiment_join %>%
+ # group_by(listing_id) %>%
+  #summarize(mean(SentimentQDAP))
 df <- right_join(Listings,Reviews_mean_HE, by= "listing_id")
 df <- right_join(df,Reviews_mean_LM, by= "listing_id")
 df <- right_join(df,Reviews_mean_QDAP, by= "listing_id")
