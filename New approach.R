@@ -1,10 +1,10 @@
 # load library and if the package doesn't exist this code install the package and then load the library
-wants <- c('tidyverse','SentimentAnalysis') 
+wants <- c('tidyverse','SentimentAnalysis','ggplot2','plotly','ggpubr') 
 has <- wants %in% rownames(installed.packages()) 
 if(any(!has)) install.packages(wants[!has])
-  sapply(wants, require, character.only = TRUE) 
+sapply(wants, require, character.only = TRUE) 
 rm("wants","has")
-  
+
 #load the csv files
 Reviews <- read.csv("reviews.csv", header= TRUE) #Loads the Reviews file
 Listings <- read.csv("listings.csv", header = TRUE) # Loads the listings file
@@ -35,103 +35,89 @@ Listings$summary <-  as.character(Listings$summary) #converting the summary from
 Listings$description <-  as.character(Listings$description) #converting the summary from factor to character type
 
 #------------------------------------------------------------------------------------------------------------------------------------------
-# In this step I'm trying to create a sample population of Review file
-#a <- Sys.time()
-#unique_listing_id <-  unique(Reviews$listing_id)
-#random_listing <- sample(unique_listing_id,3000)
-#Review_sample <- Reviews[0,]
-#no_rows <- 0
-  #for(id in unique_listing_id){
-   # df1 <- Reviews[Reviews$listing_id== id,]
-    #Review_sample <- rbind(Review_sample, df1)
-    #no_rows <- nrow(Review_sample)
-    #if(no_rows >= 664323)break()
-  #}
-Sys.time() - a
+#------------------EAD---------------------------------------------------------------------------------------------------------
+Listings_clean <- Listings [-(which(is.na(Listings$review_scores_rating))),]
+neighbourhood_agg <- aggregate(Listings_clean$review_scores_rating, by= list(Neighbourhood_Name = Listings_clean$neighbourhood), FUN= mean)
+#plot describes how the mean ratings of each neighbourhood is distributed
+plot_ly(x = neighbourhood_agg$Neighbourhood_Name,y = neighbourhood_agg$x,type = 'bar')
 
-#Review_sample$RowID <- seq.int(nrow(Review_sample))
-#Reviews_subset <- Review_sample
-Reviews$WordCount <- NA
-Reviews$SentimentGI <- NA
-Reviews$SentimentLM <- NA
-Reviews$SentimentQDAP <- NA
-Reviews$SentimentHE <- NA
-# In this step I'm trying to analyze the setiment of each comment and then merge it with the Reviews table
+plot_ly(x = neighbourhood_agg$Neighbourhood_Name,y = neighbourhood_agg$x,type = 'scatter')
+#  Checking the normality of reviews_rating_scores
+random_listing <- sample(Listings$review_scores_rating,5000)
+shapiro.test(random_listing)
+# Correlation analysis
+#Analysing correlation between different types of ratings 
+correlation_review <- c("review_scores_rating", "review_scores_accuracy", "review_scores_cleanliness", "review_scores_checkin","review_scores_communication","review_scores_location","review_scores_value","price")
+Correlation_review_df <- Listings[correlation_review]
+Correlation_review_df$price <- as.numeric(Correlation_review_df$price)
+Correlation_review_df <- na.omit(Correlation_review_df)
+Correlation_matrix <- cor(Correlation_review_df)
+corrplot(Correlation_matrix)
+# Exploring the top 5% airbnb listing
+top5 <- head(Listings_clean[order(Listings_clean$reviews_per_month,decreasing=T),],.05*nrow(Listings_clean))
+bottom5 <- head(Listings_clean[order(Listings_clean$reviews_per_month,decreasing=F),],.05*nrow(Listings_clean))
+#review per month is correlated to how many times listings get booked
+# Wordcloud of summary of top 5% Airbnb Listing 
+#First, we need to create a corpus.
+Corpus <- Corpus(VectorSource(top5$summary))
+#Next, we will convert the corpus to a lowercase.
+Corpus <- tm_map(Corpus, content_transformer(tolower))
+#Then, we will remove all punctuation and stopwords, and convert it to a plain text document.. Stopwords are commonly used words in the English language such as I, me, my, etc. You can see the full list of stopwords using stopwords('english').
+Corpus <- tm_map(Corpus, removePunctuation)
+Corpus <- tm_map(Corpus, removeWords, stopwords('english'))
+#Next, we will perform stemming. This means that all the words are converted to their stem (Ex: learning -> learn, walked -> walk, etc.). This will ensure that different forms of the word are converted to the same form and plotted only once in the wordcloud.
+Corpus <- tm_map(Corpus, stemDocument)
+#Now, we will plot the wordcloud.
+par(bg="black") 
+wordcloud(Corpus, max.words = 50, random.order = FALSE,col=terrain.colors(length(Corpus) , alpha=0.9))
+# Wordcloud of summary of bottom 5% Airbnb Listing 
+#First, we need to create a corpus.
+Corpus <- Corpus(VectorSource(bottom5$summary))
+#Next, we will convert the corpus to a lowercase.
+Corpus <- tm_map(Corpus, content_transformer(tolower))
+#Then, we will remove all punctuation and stopwords, and convert it to a plain text document.. Stopwords are commonly used words in the English language such as I, me, my, etc. You can see the full list of stopwords using stopwords('english').
+Corpus <- tm_map(Corpus, removePunctuation)
+Corpus <- tm_map(Corpus, removeWords, stopwords('english'))
+#Next, we will perform stemming. This means that all the words are converted to their stem (Ex: learning -> learn, walked -> walk, etc.). This will ensure that different forms of the word are converted to the same form and plotted only once in the wordcloud.
+Corpus <- tm_map(Corpus, stemDocument)
+#Now, we will plot the wordcloud.
+par(bg="black") 
+wordcloud(Corpus, max.words = 50, random.order = FALSE,col=terrain.colors(length(Corpus) , alpha=0.9))
+#--------------------------------------------------------------------------
+summary(Listings_clean$review_scores_rating)
+table<- table(Listings_clean$review_scores_rating)
+barplot(table)
+plot(density(Listings_clean$review_scores_rating))
+#------------------------------------------ Dividing into categories
+Listings_clean <- Listings_clean %>%
+  mutate(category = ifelse(review_scores_rating >= 90,"Excellent",ifelse(review_scores_rating >= 80 
+                          & review_scores_rating < 90,"Good",ifelse(review_scores_rating >= 70 
+                          & review_scores_rating < 80,"Average",ifelse(review_scores_rating < 70 
+                          & review_scores_rating >= 0,"Bad","NA")))))
+#------------------------------------------------------------------- Creating subset listing
+Bad_Listings <- Listings_clean[Listings_clean$category == 'Bad',]
+Average_Listings <- Listings_clean[Listings_clean$category == 'Average',]
+Good_Listings <- Listings_clean[Listings_clean$category == 'Good',]
+Excellent_Listings <- Listings_clean[Listings_clean$category == 'Excellent',]
+sample_bad <- sample_frac(Bad_Listings,0.1)
+sample_Average <- sample_frac(Average_Listings,0.1)
+sample_Good <- sample_frac(Good_Listings,0.07)
+sample_Excellent <- sample_frac(Excellent_Listings,0.05)
+Total_sample <- do.call("rbind", list(sample_bad, sample_Average,sample_Good, sample_Excellent))
+Total_review_sample <- subset(Reviews,listing_id %in% Total_sample$listing_id )
+Total_review_sample$WordCount <- NA
+Total_review_sample$SentimentGI <- NA
+Total_review_sample$SentimentLM <- NA
+Total_review_sample$SentimentQDAP <- NA
+Total_review_sample$SentimentHE <- NA
 b <- Sys.time()
-for(i in 1:2 ){
-  com <- Reviews$comments[i]
+for(i in 1:nrow(Total_review_sample) ){
+  com <- Total_review_sample$comments[i]
   Reviews_sentiment <- analyzeSentiment(com)
-  Reviews$WordCount[i] <- Reviews_sentiment$WordCount[i]
-  Reviews$SentimentGI[i] <- Reviews_sentiment$SentimentGI[i]
-  Reviews$SentimentLM[i] <- Reviews_sentiment$SentimentLM[i]
-  Reviews$SentimentQDAP[i] <- Reviews_sentiment$SentimentQDAP[i]
-  Reviews$SentimentHE[i] <- Reviews_sentiment$SentimentHE[i]
-  }
+  Total_review_sample$WordCount[i] <- Reviews_sentiment$WordCount[i]
+  Total_review_sample$SentimentGI[i] <- Reviews_sentiment$SentimentGI[i]
+  Total_review_sample$SentimentLM[i] <- Reviews_sentiment$SentimentLM[i]
+  Total_review_sample$SentimentQDAP[i] <- Reviews_sentiment$SentimentQDAP[i]
+  Total_review_sample$SentimentHE[i] <- Reviews_sentiment$SentimentHE[i]
+}
 Sys.time() - b
-#Reviews_sentiment <- analyzeSentiment(Reviews_subset$comments)
-#Sys.time() - b
-#Reviews_sentiment$RowID <- seq.int(nrow(Reviews_sentiment))
-#Reviews_sentiment_join <- inner_join(Reviews_subset, Reviews_sentiment, by = "RowID") 
-#Reviews_mean_GI <- Reviews_sentiment_join %>%
-  #group_by(listing_id) %>%
-  #ummarize(mean(SentimentGI))
-#Reviews_mean_HE <- Reviews_sentiment_join %>%
- # group_by(listing_id) %>%
-  #summarize(mean(SentimentHE))
-#Reviews_mean_LM <- Reviews_sentiment_join %>%
- # group_by(listing_id) %>%
-  #summarize(mean(SentimentLM))
-#Reviews_mean_QDAP <- Reviews_sentiment_join %>%
- # group_by(listing_id) %>%
-  #summarize(mean(SentimentQDAP))
-df <- right_join(Listings,Reviews_mean_HE, by= "listing_id")
-df <- right_join(df,Reviews_mean_LM, by= "listing_id")
-df <- right_join(df,Reviews_mean_QDAP, by= "listing_id")
-df <- right_join(df,Reviews_mean_GI, by= "listing_id")
-
- names(df)[99] <- "meanGI"
- names(df)[98] <- "meanQDAP"
- names(df)[97] <- "meanLM"
- names(df)[96] <- "meanHE"
- #### EDA PART Comparision between various variables:----------------------------------------------------------
-drop <- which(is.na(df$meanHE))
-df <- df [-(drop),] # dropping the NA rows
-
-#correlation test review_scores_rating and mean_GI using pearson
-ggscatter(df, x = "review_scores_rating", y = "meanGI", 
-               add = "reg.line", conf.int = TRUE, 
-               cor.coef = TRUE, cor.method = "pearson",
-               xlab = "Actual", ylab = "calculated")
-# result r= 0.18 and p=0.2
-#correlation test review_scores_rating and mean_HE
-ggscatter(df, x = "review_scores_rating", y = "meanHE", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "Actual", ylab = "calculated")
-#result r = -0.045 , p=0.76
-#correlation test review_scores-rating and meanLM
-ggscatter(df, x = "review_scores_rating", y = "meanLM", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "Actual", ylab = "calculated")
-#correlation test review_scores-rating and QDAP
-ggscatter(df, x = "review_scores_rating", y = "meanQDAP", 
-          add = "reg.line", conf.int = TRUE, 
-          cor.coef = TRUE, cor.method = "pearson",
-          xlab = "Actual", ylab = "calculated")
-
-#result r=0.11 and p=0.45
-
-#performed normality test and failed so can't apply
-shapiro.test(df$review_scores_rating)
-shapiro.test(df$meanHE)
-shapiro.test(df$meanLM)
-shapiro.test(df$meanGI)
-shapiro.test(df$meanQDAP)
-#correlation test review_scores_rating and mean_GI using  Kendall rank correlation coefficient 
-cor.test(df$review_scores_rating, df$meanGI, method="kendall")
-#tau value 0.05533509 close to 0 so no association
-
-#correlation test review_scores_rating and meanQDAP using  Kendall rank correlation coefficient
-cor.test(df$review_scores_rating, df$meanQDAP, method="kendall")
-#tau value 0.0.1072117 close to 0 so no association
