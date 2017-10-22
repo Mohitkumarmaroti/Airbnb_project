@@ -1,0 +1,57 @@
+## Exploring the Data:
+
+```{r eval=FALSE}
+summary(Listings)
+summary(Reviews)
+```
+#### Counting Number of Reviews from the Reviews data file.
+```{r}
+length(unique(Reviews$id))
+```
+
+#### Counting Number of Listings from the listing data file.
+```{r}
+length(unique(Listings$listing_id))
+```
+#### Listing distribution over different cities
+```{r}
+length(unique(Listings$city))
+```
+
+Here we can see that there are 27721 reviews written against 741 listings spread over 7 different cities in Asheville, NC.
+
+#### Rating Score distribution
+```{r}
+summary(Listings$review_scores_accuracy)
+```
+```{r eval=FALSE}
+ratings_freq <- as.data.frame(table(Listings$review_scores_accuracy))
+plot1 <- plot_ly(x = ratings_freq$Var1,y = ratings_freq$Freq,type = 'bar')
+
+```
+![](rating.png)
+We can see that minimum review score of a listing is 6 and max is 10 and mean score is 9.75 score is which pretty high. This data tells us most of the listings are rated really high and ploty graph support that observation. Here you might think most of the ratings are positive then how is this helping the user? Well having many positive reviews adds more value to review sentiment score as it will help you pick best from the best.
+
+#### Number of Reviews distribution
+```{r}
+reviews_freq <- as.data.frame(table(Reviews$listing_id))
+summary(reviews_freq$Freq)
+```
+
+```{r eval=FALSE}
+plot_ly(x = reviews_freq$Var1,y = reviews_freq$Freq,type = 'scatter')
+```
+![](score.png)
+We can see here that all the listings are reviewed at least once and one or more review have been reviewed 410 times. The average review per listing is 37. The ploty graph will help you see the distribution more closely.
+
+#### Listing Distribution over different cities
+```{r}
+city_freq <- as.data.frame(table(Listings$city))
+summary(city_freq$Freq)
+```
+```{r eval=FALSE}
+plot_ly(x = city_freq$Var1,y = city_freq$Freq,type = 'bar')
+```
+![](city.png)
+
+Here we are seeing the distribution of airbnb listing over differnt cities.Clearly, we can see that Asheville city has highest number of listing and Mills River and Weaverville have just 1 listing each. 
