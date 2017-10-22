@@ -1,0 +1,13 @@
+---
+title: "Aribnb_Review_Prediction"
+author: "Mohit Kumar Maroti"
+date: "10/14/2017"
+---
+# Airbnb Review Predictor Using Sentiment Analysis
+## Introduction:
+
+Airbnb today has become the largest home-sharing network with over three million listings in 65,000+ cities spread over 191 countries. Certainly, the company has grown exponentially since 2008 and at the same time keeping the dual-sided market happy and satisfied. I've been using Airbnb since last three year and never had a bad experience.Finding a place to stay through Airbnb is very simple but the tricky and most time-consuming part to me was "TO FIND THE RIGHT PLACE".
+
+Rating of a listing on Airbnb is widely used to determine the quality of the listing and some time to dig deep users tend to read the reviews before they make their decision. Though there are lots of wonderful hype about Airbnb, there are tons of pitfalls to using the service, including its lack of privacy, poor consistency and these get covered by ratings. Ratings can be deceptive some times as they are very difficult to describe the experience of a guest on a scale of 1 to 10. However, a review or a comment tells you a true story of guests experience. Reading all the reviews of listings can be time-consuming and if you have more listings to chose from the decision-making process can be tough and time-consuming.
+
+Through this project, I'm trying to to find a way to predict an alternative review score and present the same to the user. The predictor score is called "Review Sentiment Score". The predictor score will be a true representation of user feeling and will present a true story behind a users experience.
