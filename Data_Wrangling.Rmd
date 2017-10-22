@@ -1,0 +1,43 @@
+## The Airbnb Dataset:
+
+I'm using Airbnb Asheville, NC listings dataset. This dataset has two files " Reviews.csv" and "Listings.csv". The listings datasets have different variables related to Airbnb listings and Reviews datasets have different variable related to reviews written against the listings.Raw data obtained for this project has a very well-defined structure. We have taken different approaches to clean to the data. Apart from converting the data variables into the desired format for data
+analysis, we have taken steps to remove NA values from important variables.
+
+## Installing and loading the required packages for our analysis
+```{r eval=FALSE}
+wants <- c('tidyverse','SentimentAnalysis','ggplot2','plotly','ggpubr','plyr','corrplot', 'randomForest','caTools','pROC','caret','e1071') 
+has <- wants %in% rownames(installed.packages()) 
+if(any(!has)) install.packages(wants[!has])
+sapply(wants, require, character.only = TRUE) 
+rm("wants","has")
+```
+
+## Loading the datasets:
+```{r}
+Reviews <- read.csv("reviews.csv", header= TRUE) #Loads the Reviews file
+Listings <- read.csv("listings.csv", header = TRUE) # Loads the listings file
+```
+## Structure of Datasets:
+```{r eval=FALSE}
+  str(Reviews)
+  str(Listings)
+```
+### Data wrangling 
+The two data files which I've used require some data initial wrangling in order to proceed with my analysis. In this step, I've done some basic data wrangling but as we move further I will be making some more changes in the variable format as an when required.
+```{r}
+#step0: changing the column name so that I can join the table
+colnames(Listings)[1] <- "listing_id" 
+#step1: Remove the listings which are not rated
+drop_row <- which(is.na(Listings$review_scores_accuracy))
+Listings <- Listings[-(drop_row),]
+
+#steps 2 Remove the reviews which have no comments 
+which(is.na(Reviews$comments)) 
+
+#step 3 Remove if unique identifiers are missing
+which(is.na(Reviews$listing_id)) 
+
+#step4: Cleaning the review file in the desired format
+Reviews$comments <- as.character(Reviews$comments) #converting the comments from factor to character type
+```
+In step0 I have renamed the first column of Listing to " listing_id" so that I can join it with the review file when required. In Step1 Step2 and Step3: I have tried to find which rows are empty and then remove them. In step2 and Step3: return value is 0 so there is no need to remove any observation. In step4: I have converted the Comments variable into character format which will be required for sentiment analysis of comments.
